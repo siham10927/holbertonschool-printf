@@ -1,138 +1,67 @@
 #include "main.h"
 
+void print_buffer(char buffer[], int *buff_ind);
+
 /**
- * p_num - prints chars and base-10 integers
- * @list: arguments list
- * @f: format specifications
- * Return: formatted str
+ * _printf - Printf function
+ * @format: format.
+ * Return: Printed chars.
  */
-char *p_num(va_list list, str_list *f)
+int _printf(const char *format, ...)
 {
-	unsigned long int n = va_arg(list, unsigned long int);
+	int i, printed = 0, printed_chars = 0;
+	int flags, width, precision, size, buff_ind = 0;
+	va_list list;
+	char buffer[BUFF_SIZE];
 
-	if (_strchr("uid", f->type))
-		return (p_base10(n, f));
+	if (format == NULL)
+		return (-1);
 
-	return (p_base2(n, f));
-}
+	va_start(list, format);
 
-/**
- * p_c - print char
- * @c: char
- * @i_hate_this: ugh
- * Return: char string
- **/
-char *p_c(int c, int *i_hate_this)
-{
-	static int null_byte;
-	char *str;
-
-	if (i_hate_this)
+	for (i = 0; format && format[i] != '\0'; i++)
 	{
-		*i_hate_this += null_byte;
-		return (NULL);
+		if (format[i] != '%')
+		{
+			buffer[buff_ind++] = format[i];
+			if (buff_ind == BUFF_SIZE)
+				print_buffer(buffer, &buff_ind);
+			/* write(1, &format[i], 1);*/
+			printed_chars++;
+		}
+		else
+		{
+			print_buffer(buffer, &buff_ind);
+			flags = get_flags(format, &i);
+			width = get_width(format, &i, list);
+			precision = get_precision(format, &i, list);
+			size = get_size(format, &i);
+			++i;
+			printed = handle_print(format, &i, list, buffer,
+				flags, width, precision, size);
+			if (printed == -1)
+				return (-1);
+			printed_chars += printed;
+		}
 	}
 
-	if (c == '\0')
-		null_byte++;
+	print_buffer(buffer, &buff_ind);
 
-	str = malloc(2);
-	if (str == NULL)
-		return (NULL);
-	*str = c;
-	*(str + 1) = '\0';
+	va_end(list);
 
-	return (str);
+	return (printed_chars);
 }
 
 /**
- * p_base10 - returns a decimal string representation of a number
- * @n: num to turn to str
- * @f: format specifications
- * Return: pointer to decimal string representation of n
- **/
-char *p_base10(unsigned long int n, str_list *f)
-{
-	unsigned long int size = 1E19, print = 0, max;
-	char *buf = malloc(21), *tmp = buf;
-
-	if (buf == NULL)
-		return (NULL);
-
-	if (f->len == 'l')
-		max = LONG_MAX;
-	if (f->len == 'h')
-		max = SHRT_MAX;
-	else
-		max = INT_MAX;
-
-	if (f->type != 'u')
-	{
-		if (n > max)
-		{
-			*buf++ = '-';
-			n = ~(n - 1) & (max < UINT_MAX ? UINT_MAX : ULONG_MAX);
-		}
-		else if (f->plus)
-			*buf++ = '+';
-		else if (f->space)
-			*buf++ = ' ';
-	}
-	for (; size; size /= 10)
-		if ((n / size) || print || size == 1)
-		{
-			print = 1;
-			*buf++ = (n / size) + '0';
-			n %= size;
-		}
-	*buf = '\0';
-	return (tmp);
-}
-
-/**
- * p_base2 - prints numbers, addresses, and single chars
- * @n: number to print
- * @f: format specifications
- * Return: formatted str
+ * print_buffer - Prints the contents of the buffer if it exist
+ * @buffer: Array of chars
+ * @buff_ind: Index at which to add next char, represents the length.
  */
-char *p_base2(unsigned long int n, str_list *f)
+void print_buffer(char buffer[], int *buff_ind)
 {
-	unsigned long int i, check, power = 4, hex_shift = 0, bits = 32, print = 0;
-	char *buf = malloc(65), *p = buf;
+	if (*buff_ind > 0)
+		write(1, &buffer[0], *buff_ind);
 
-	if (buf == NULL)
-		return (NULL);
-	if (f->len == 'l' || f->type == 'p')
-		bits = 64;
-	if (f->type == 'b')
-		power = 1;
-	else if (f->type == 'o')
-		power = 3;
-	if (f->type == 'x' || f->type == 'p')
-		hex_shift = 39;
-	else if (f->type == 'X')
-		hex_shift = 7;
-	if ((f->hash && f->type != 'b') || f->type == 'p')
-	{
-		*p++ = '0';
-		if (f->type == 'x' || f->type == 'p')
-			*p++ = 'x';
-		else if (f->type == 'X')
-			*p++ = 'X';
-	}
-	while (bits)
-	{
-		for (i = 0, check = 1; check; check = bits % power)
-			i = (i << 1) + ((n >> --bits) & 1);
-		if (i > 9)
-			i += hex_shift;
-		if (!print)
-			print = (i & 15);
-		if (print)
-			*p++ = i + '0';
-	}
-	if (n == 0)
-		*p++ = '0';
-	*p = '\0';
-	return (buf);
+	*buff_ind = 0;
 }
+
