@@ -1,71 +1,78 @@
+#include <stdarg.h>
+#include <unistd.h>
 #include "main.h"
 /**
- * _printf - is a function that formats and prints data
- * @format: format of data
- * Return: number of characters printed
- */
+  * find_function - function that finds formats for _printf
+  * calls the corresponding function.
+  * @format: format (char, string, int, decimal)
+  * Return: NULL or function associated ;
+  */
+int (*find_function(const char *format))(va_list)
+{
+	unsigned int i = 0;
+	code_f find_f[] = {
+		{"c", print_char},
+		{"s", print_string},
+		{"i", print_int},
+		{"d", print_dec},
+		{"r", print_rev},
+		{"b", print_bin},
+		{"u", print_unsig},
+		{"o", print_octal},
+		{"x", print_x},
+		{"X", print_X},
+		{"R", print_rot13},
+		{NULL, NULL}
+	};
+
+	while (find_f[i].sc)
+	{
+		if (find_f[i].sc[0] == (*format))
+			return (find_f[i].f);
+		i++;
+	}
+	return (NULL);
+}
+/**
+  * _printf - function that produces output according to a format.
+  * @format: format (char, string, int, decimal)
+  * Return: size the output text;
+  */
 int _printf(const char *format, ...)
 {
-	const char *p;
-	unsigned int i;
-	int j;
-	int k = 0;
-	va_list conspec;
-	char *s;
+	va_list ap;
+	int (*f)(va_list);
+	unsigned int i = 0, cprint = 0;
 
-	if (!format)
-	{
+	if (format == NULL)
 		return (-1);
-	}
-	va_start(conspec, format);
-	for (p = format; *p != '\0'; p++)
+	va_start(ap, format);
+	while (format[i])
 	{
-		if (*p != '%')
+		while (format[i] != '%' && format[i])
 		{
-			_putchar(*p, &k);
+			_putchar(format[i]);
+			cprint++;
+			i++;
+		}
+		if (format[i] == '\0')
+			return (cprint);
+		f = find_function(&format[i + 1]);
+		if (f != NULL)
+		{
+			cprint += f(ap);
+			i += 2;
 			continue;
 		}
-		p++;
-		switch (*p)
-		{
-		case 'c':
-			i = va_arg(conspec, int);
-			_putchar(i, &k);
-			break;
-		case 's':
-			s = va_arg(conspec, char *);
-			_puts(s, &k);
-			break;
-		case '%':
-			_putchar('%', &k);
-			break;
-		case 'd':
-			j = va_arg(conspec, int);
-			_print_number(j, &k);
-			break;
-		case 'i':
-			j = va_arg(conspec, int);
-			_print_number(j, &k);
-			break;
-		case 'r':
-			s = va_arg(conspec, char *);
-			_rev_string(s, &k);
-			break;
-		case 'b':
-			i = va_arg(conspec, int);
-			_print_binary(i, &k);
-			break;
-		case 'R':
-			s = va_arg(conspec, char *);
-			_rot13(s, &k);
-			break;
-		case '\0':
+		if (!format[i + 1])
 			return (-1);
-		default:
-			_putchar('%', &k);
-			_putchar(*p, &k);
-		}
+		_putchar(format[i]);
+		cprint++;
+		if (format[i + 1] == '%')
+			i += 2;
+		else
+			i++;
 	}
-	va_end(conspec);
-	return (k);
+	va_end(ap);
+	return (cprint);
 }
