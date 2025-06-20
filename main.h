@@ -1,15 +1,23 @@
-#ifndef HOL_H
-#define HOL_H
+#ifndef MAIN_H
+#define MAIN_H
+#include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
-/*Structs*/
-/*Typedefs*/
-/*Prototypes*/
-int _putchar(char c, int *k);
-void _puts(char *str, int *k);
+#include <stdarg.h>
+#include <unistd.h>
+int _putchar(char c);
 int _printf(const char *format, ...);
-void _print_number(int n, int *k);
-void _rev_string(char *s, int *k);
-int _strlen(char *s);
-void _print_binary(int n, int *k);
-void _rot13(char *s, int *k);
+int get_fun(char format, va_list args);
+typedef struct form
+{
+	char str;
+
+	int (*print)(va_list args);
+} fmt;
+int char_print(va_list args);
+int pert_print(__attribute__((unused)) va_list args);
+int string_print(va_list args);
+int num_print(va_list args);
+int unsigned_num(va_list args);
+int binary(va_list args);
 #endif
